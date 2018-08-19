@@ -1,0 +1,2 @@
+Opensshenum is an user enumerator permitting to verify a list of user names to know those actually configured on a server using OpenSsh. This program  exploits a bug ( corrected in July 2018  ) proven to be effective at least starting from OpenSSH 2.3.0 ( released in November 2000).
+
