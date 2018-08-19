@@ -5,6 +5,10 @@ Opensshenum is an OpenSsh user enumerator permitting to verify an arbitrary list
 
 I wrote the expoit starting from Tssh, a SSH 2 client I wrote in C++11 from scratch starting from the RFCs.
 
+For more information read here:
+
+http://seclists.org/oss-sec/2018/q3/124
+
 Prerequisites:
 ==============
 
