@@ -57,7 +57,7 @@ Instructions:
 It elaborates the user list passed in pipe, example:
 
 cat user.txt | ./opensshenum -i dummy_cert target_addr<BR>
-xxx:NOK
+xxx:NOK <BR>
 gabriel:OK
 
 where user.txt is a file containing a list of users, one for each line 
@@ -67,7 +67,7 @@ and dummy_cert is a key generate with the commang ssh-keygen of OpenSsh
 A program could be used to geerate le list:
 
 printf "xxx\ngabriel" | ./src/opensshenum   -i dummy_rsa localhost <BR>
-xxx:NOK
+xxx:NOK <BR>
 gabriel:OK
 
 See the man page included in this release.
