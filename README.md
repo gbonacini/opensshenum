@@ -9,6 +9,8 @@ For more information read here:
 
 http://seclists.org/oss-sec/2018/q3/124
 
+This issue received CVE-2018-15473.
+
 Prerequisites:
 ==============
 
