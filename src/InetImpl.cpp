@@ -57,6 +57,14 @@ namespace inet {
    string InetClosedByHostException::what(void)  const noexcept{
       return errorMessage;
    }
+
+   InetConnectTimeout::InetConnectTimeout(const string&  errString)
+      : errorMessage{errString}
+   { }
+   
+   string InetConnectTimeout::what(void)  const noexcept{
+      return errorMessage;
+   }
    
    Inet::Inet(readFunc rFx, writeFunc wFx) : result(nullptr), bufferPtr(nullptr), 
                                              tvMin{3,0}, tvMax{10,0}, nfds(-1) {
@@ -301,17 +309,42 @@ namespace inet {
       }
       errno=0;
    }
+
+   std::atomic_bool InetClient::alarmOn(false);
    
-   InetClient::InetClient(const char* ifc, const char* port) anyexcept{
+   InetClient::InetClient(const char* ifc, const char* port, 
+                          bool timeout,    unsigned int maxTime) anyexcept{
       int errCode  = getaddrinfo(ifc, port, &hints, &result);
       if( errCode != 0) throw InetException(string("InetClient: Getaddrinfo Error: ") + 
                                             ifc + " : " + ::gai_strerror(errCode));
       
       for(resElement=result; resElement!=nullptr; resElement=resElement->ai_next){
          socketFd=socket(resElement->ai_family, resElement->ai_socktype, resElement->ai_protocol);
-         if(socketFd == -1)                        continue;
-         if(connect(socketFd,resElement->ai_addr,
-            resElement->ai_addrlen) == 0)          break;
+         if(socketFd == -1)
+             continue;
+         if(timeout){
+            InetClient::alarmOn   = false;
+            sigemptyset(&sigActionAlarm.sa_mask);
+            sigActionAlarm.sa_flags          = 0;
+            sigActionAlarm.sa_handler        = [](int){ InetClient::alarmOn = true; };
+            if(sigaction(SIGALRM, &sigActionAlarm, nullptr) != 0)
+                throw InetException("InetClient: setting alarm.");
+
+            alarm(maxTime);
+            errCode = connect(socketFd,resElement->ai_addr, resElement->ai_addrlen);
+            alarm(0);
+            if(InetClient::alarmOn){
+                shutdown(socketFd, SHUT_RDWR);
+                throw InetConnectTimeout("InetClient: time exceed.");
+            }
+            if(errCode == 0)
+                 break;
+
+         }else{
+             errCode = connect(socketFd,resElement->ai_addr, resElement->ai_addrlen);
+             if(errCode == 0)
+                 break;
+         }
       }
    
       if(resElement == nullptr) throw InetException("InetClient: Connect socket to any address failed.");

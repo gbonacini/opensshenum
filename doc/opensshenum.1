@@ -1,8 +1,9 @@
 .TH OPENSSHENUM 1 "SEPTEMBER 2016" Linux "User Manuals"                                  
 .SH NAME                                                                     
-opensshenum \- an user enumerator for servers using OpenSsh. 
+opensshenum \- an user enumerator and port scanner for servers using OpenSsh. 
 .SH SYNOPSIS                                                                 
-.B  opensshenum [-p port] [-i identity] [-d] host 
+.B  opensshenum [-p port | -s -m min -M max -n -r regexp -c clientIdstr]
+         [-i identity] [-d] host
          [-h] [-V]
 .SH DESCRIPTION                                                              
 .B opensshenum                                                                       
@@ -10,6 +11,20 @@ opensshenum \- an user enumerator for servers using OpenSsh.
 .SH OPTIONS                                                       
 .IP -p port
 Specifies the remote port used by the ssh server. If not specified, the port 22 will be used.
+.IP -s 
+Scan mode try to perform the exploit on a range of port. If -m and -M are not specified, the range 1-65535 will be employed.
+.IP -t seconds
+Port scanning timeout in seconds. A value too low can cause false  negatives. The default is 2 seconds. It should be tuned in relation to the network characteristics of the target.
+.IP -c id_string
+Client id string used in initial handshaking to identify the ssh client. If no custom string is provided, the id 'SSH-2.0-enum' will be sent to the server.
+.IP -r regexp
+regular expression to identify OpenSSH using is 'hello string' (i.e .*OpenSSH).
+.IP -n 
+Only scan the target to individuare ssh port(s). No user enumeration is performed.
+.IP -m port_num
+Lower port for scan mode: the scan will be performed. Starting from this port number to that specified with -M.
+.IP -M port_num
+Higher port for scan mode: the scan will be performed starting from port specified with -m  to this port number.    
 .IP -i prefix
 Specifies the prefix name for the ssh key files, i.e. for rsa the standard is id_rsa, that identifies the couple of files "id_rsa" and "id_rsa.pub" with the private and public rsa keys. Using this parameter, a diferent prefix is specified for both files.
 .IP -d                                                                       

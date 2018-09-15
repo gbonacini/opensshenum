@@ -28,19 +28,32 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #include <iostream>
 #include <string>
 #include <vector>
+#include <atomic>
 
 #include <Types.hpp>
 #include <anyexcept.hpp>
    
 namespace inet{
+
+   enum  Inetconf { MAX_CONN_RETRIES=3, STD_MS_DELAY=350,
+                    STD_SEC_DELAY=2};
    
    class InetClosedByHostException final {
       public:
          explicit    InetClosedByHostException(const std::string&  errString);
+         std::string what(void)                                        const noexcept;
+      private:
+         std::string errorMessage;
+   };
+   
+   class InetConnectTimeout final {
+      public:
+         explicit    InetConnectTimeout(const std::string&  errString);
          std::string what(void)                                        const noexcept;
       private:
          std::string errorMessage;
@@ -128,11 +141,16 @@ namespace inet{
          int                        nfds;
    };
 
+   using Sigaction=struct sigaction;
+
    class InetClient : public Inet{
            public:
-                   InetClient(const char* ifc, const char* port) ;
+                   InetClient(const char* ifc, const char* port, 
+                              bool timeout=false, unsigned int maxTime=STD_SEC_DELAY);
                    ~InetClient(void);                                              
            private:
+                   static std::atomic_bool alarmOn;
+                   Sigaction               sigActionAlarm;
                    void cleanResurces(void)                                 noexcept   override;
    };
 

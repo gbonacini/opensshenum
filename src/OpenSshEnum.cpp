@@ -31,6 +31,9 @@ namespace opensshenum{
    using  std::cout;
    using  std::endl;
    using  std::get;
+   using  std::regex;
+   using  std::regex_match;
+   using  std::regex_replace;
 
    using  stringutils::addVarLengthDataCCharStr;
    using  stringutils::addVarLengthDataString;
@@ -74,7 +77,8 @@ namespace opensshenum{
    static const char *SSH_KNOWN_HOST_FILE             = "known_hosts";
    static const char *SSH_SHELL_REQ                   = "shell";
    
-   static const char *SSH_ID_STRING                   = "SSH-2.0-bg\r\n";
+   static const char *SSH_ID_STRING_FOOT              = "\r\n";
+   static const char *SSH_ID_STRING                   = "SSH-2.0-enum\r\n";
    static const char *SSH_HEADER_ID                   = "SSH-2.0";
    static const char *RAND_FILE                       = "/dev/urandom";
    
@@ -206,9 +210,10 @@ namespace opensshenum{
    #pragma clang diagnostic ignored "-Wundefined-func-template"
    #endif
 
-   SshTransport::SshTransport(string host, string port): 
-                 InetClient(host.c_str(), port.c_str()), hostname(host), 
-                 clientIdString(SSH_ID_STRING), haveKeys(false){ 
+   SshTransport::SshTransport(string host, string port)
+             :   InetClient(host.c_str(), port.c_str()), hostname(host), 
+                 clientIdString(SSH_ID_STRING), haveKeys(false)
+   { 
   
       rndFd =  open(RAND_FILE, O_RDONLY);
       if(rndFd == -1)
@@ -246,11 +251,42 @@ namespace opensshenum{
    
    SshTransport::~SshTransport(){
    
-      BN_free(get<BN_KEYF>(dhReplyPacket));        
-      BN_free(get<BN_EXPONENT>(dhReplyPacket));        
-      BN_free(get<BN_MODULUS>(dhReplyPacket));        
+      if(get<BN_KEYF>(dhReplyPacket) != nullptr) 
+          BN_free(get<BN_KEYF>(dhReplyPacket));        
+      if(get<BN_EXPONENT>(dhReplyPacket) != nullptr) 
+          BN_free(get<BN_EXPONENT>(dhReplyPacket));        
+      if(get<BN_MODULUS>(dhReplyPacket) != nullptr) 
+          BN_free(get<BN_MODULUS>(dhReplyPacket));        
 
-      close(rndFd);
+      if(rndFd > 0) close(rndFd);
+   }
+
+   SshTransport::SshTransport(string host, string port, string id, unsigned int maxTime)
+             :   InetClient(host.c_str(), port.c_str(), true, maxTime), 
+                 rndFd{-128}, hostname(host), haveKeys{false}
+   { 
+      clientIdString = id.empty() ? SSH_ID_STRING : id.append(SSH_ID_STRING_FOOT);
+   
+      packetsRcvCount = std::numeric_limits<uint32_t>::max();   
+      packetsSndCount = std::numeric_limits<uint32_t>::max();
+
+      initBuffer(SSH_MAX_PACKET_SIZE);
+      try{
+         incomingEnc.resize(SSH_MAX_PACKET_SIZE * 10);  
+         outcomingEnc.resize(SSH_MAX_PACKET_SIZE);
+         // currentHashS.resize(SSH_MAX_PACKET_SIZE);
+         // keys.resize(SSH_STD_KEYS_NUMBER);
+         // message.resize(SSH_MAX_PACKET_SIZE);
+         partialRead.resize(SSH_MAX_PACKET_SIZE * 10);
+      }catch(...){
+         throw(InetException("SshTransport: Data error."));
+      }
+   
+      setTimeoutMin(5, 0);
+
+      get<BN_KEYF>(dhReplyPacket)     = nullptr;
+      get<BN_EXPONENT>(dhReplyPacket) = nullptr;
+      get<BN_MODULUS>(dhReplyPacket)  = nullptr;
    }
    
    vector<uint8_t>&  SshTransport::setKexMsg(void)  anyexcept{
@@ -332,7 +368,7 @@ namespace opensshenum{
       reassembledLen += safeSizeT(readBuffer(currentBlockLenD));
       if(reassembledLen == 0){
          status      =  false;
-         goto INTERRUPTED_BY_SIGNAL;
+         goto SRV_INTERRUPTED_BY_SIGNAL;
       }
       try{
          partialRead.insert(partialRead.end(), buffer.begin(), 
@@ -430,7 +466,7 @@ namespace opensshenum{
 
       TRACE("\n* Rcv Sequence: " + to_string(packetsRcvCount));
 
-      INTERRUPTED_BY_SIGNAL:
+      SRV_INTERRUPTED_BY_SIGNAL:
 
       return status;
    }
@@ -504,7 +540,7 @@ namespace opensshenum{
       TRACE("* Snd Sequence: " + to_string(packetsSndCount));
    }
    
-   void SshTransport::checkSshHeader()       anyexcept{
+   void SshTransport::checkSshHeader(void)   anyexcept{
       static_cast<void>(readLineTimeout(SSH_MAX_ID_STRING_SIZE));
 
       serverIdString = currentLine;
@@ -954,13 +990,13 @@ namespace opensshenum{
 
       currStat = newStat;
    }
-   
-   SshConnection::SshConnection(string& usr, string& host, string& port,
-                                 std::string& identity,uint32_t chan) : 
-            SshTransport(host, port), user(usr), 
-            idFilePref(identity), channelNumber(chan), remoteChannelNumber(0), initialWindowsSize(0), 
-            maxPacketSize(0)                    {
 
+   SshConnection::SshConnection(string& usr, string& host, string& port,
+                                 std::string& identity, uint32_t chan)  
+        :   SshTransport(host, port), user{usr}, idFilePref{identity}, 
+            channelNumber{chan}, remoteChannelNumber{0}, initialWindowsSize{0}, 
+            maxPacketSize{0} 
+   {
       try{
          extData.reserve(SSH_MAX_PACKET_SIZE);
          keybInputData.reserve(SSH_MAX_PACKET_SIZE);
@@ -972,10 +1008,30 @@ namespace opensshenum{
          throw InetException("SshConnection: Error getting the signal mask.");
    }
 
+   SshConnection::SshConnection(string& usr,          string& host,   string& port,
+                                string& id,           string& rexp,   string& clientConnStr,
+                                unsigned int maxTime, uint32_t chan)  
+        :   SshTransport(host, port, id, maxTime), user{usr}, 
+            channelNumber{chan}, remoteChannelNumber{0}, initialWindowsSize{0}, 
+            maxPacketSize{0}, sshSrvRegexp{rexp}, regexptext{rexp}
+   {
+      if(clientConnStr.empty())
+            clientConnectionId = SSH_ID_STRING;
+      else 
+            clientConnectionId = clientConnStr;
+
+      try{
+         extData.reserve(SSH_MAX_PACKET_SIZE);
+         keybInputData.reserve(SSH_MAX_PACKET_SIZE);
+      }catch(...){
+         throw InetException("SshConnection: Data error.");
+      }
+   }
+
    SshConnection::~SshConnection(){
       ERR_clear_error();  
    }
-   
+
    void  SshConnection::createAuthSign(vector<uint8_t>& msg, initializer_list<VarData*>&& list) anyexcept{
       genericBuffer.clear();
       for(auto elem : list) {
@@ -1258,8 +1314,24 @@ namespace opensshenum{
       return connectionLoop();
    }
 
+   bool SshConnection::checkPort(string& out) anyexcept{ 
+      writeBuffer(getClientId());
+
+      checkSshHeader();
+      string serverId = getServerId();
+      bool   ret      = false;
+      if(regex_search(serverId, sshSrvRegexp)){
+          for(auto it = serverId.end(); it != serverId.begin(); --it)
+              if(*it == '\r' || *it == '\n')
+                   serverId.erase(it);
+    
+          ret         =  true;
+      }
+      out         = serverId;
+      return ret;
+   }
+
    #if defined  __clang_major__ && !defined __APPLE__ && __clang_major__ >= 4
    #pragma clang diagnostic pop 
    #endif
-
 }

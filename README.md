@@ -11,6 +11,11 @@ http://seclists.org/oss-sec/2018/q3/124
 
 This issue received CVE-2018-15473.
 
+DISCLAIMER:
+===========
+
+This code has been posted for information and educational purposes. The intrusion in systems and services without the owner's authorisation is illegal. The misuse of the information and the software in this repo can result in criminal charges brought against the perpetrator of the crime. Any actions and or activities related to the material contained within this Git Repository is solely your responsibility. The author will not be held responsible in the event any criminal charges be brought against any individuals misusing the information or the software in this website to break the law.
+
 Prerequisites:
 ==============
 
@@ -74,3 +79,17 @@ gabriel:OK
 
 See the man page included in this release.
 
+New Feafures:
+=============
+
+Ssh port scanner capability added: now opensshenum can scan all the ports associated to an address to find out instances of SSH listening on ports different from 22 to perform the exploit only to those verified ports.
+This feature can be used standalone, permitting to obtain only a list of the ports associated to SSh, without execute any attack.
+
+Example:
+
+  opensshenum -s -n -t2 -m22221 -M22225 -r'.*OpenSSH' -idummy_rsa my_imaginary_website.com
+
+  will scan ports (-s) between 22221 and 22225 (both included) , performing only the scan (-n), with timeout of 2 secs (-t), expecting a hello string containing the string OpenSSH, using a public key named idummy_rsa (I recommend to generate a key only for this kind of operations) and using as target my_imaginary_website.com.
+  More information in the man page.
+
+  An alpha script using GNU Parallel ( parallenum.sh  ) is included, as poc of the reduction of the scanning time reachable splitting the range of the ports to scan in sub-ranges, each of those of pertinence of a specific process. This obviously produce a lot of noise. To reduce the noise the -t param can be used at the purpose.

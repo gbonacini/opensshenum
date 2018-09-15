@@ -32,6 +32,7 @@
 #include <utility>
 #include <map>
 #include <set>
+#include <regex>
 
 #include <Types.hpp>
 #include <StringUtils.hpp>
@@ -232,7 +233,11 @@ namespace opensshenum{
          SshTransport(std::string host, std::string port);
          ~SshTransport();
          void                   disconnect(void)                               anyexcept; 
-   
+
+      protected:
+          SshTransport(std::string host, std::string port, 
+                       std::string id,   unsigned int maxTime);
+
       private:
          int                    rndFd;
          std::string            hostname, 
@@ -316,15 +321,23 @@ namespace opensshenum{
       public:
          SshConnection(std::string& usr, std::string& host, std::string& port, 
                        std::string& identity, uint32_t chan=0);
+
+         SshConnection(std::string& usr,      std::string& host,   std::string&  port, 
+                       std::string& id,       std::string& rexp,   std::string&  idstring, 
+                       unsigned int maxTime,  uint32_t chan=0);
+
          ~SshConnection();
 
-         bool                    checkUsr()                                              anyexcept; 
+         bool                    checkUsr(void)                                          anyexcept; 
+         bool                    checkPort(std::string& out)                             anyexcept; 
+
       private:
          mutable
          std::string             privKey,
                                  user,
                                  idFilePref,
-                                 pubKey;
+                                 pubKey,
+                                 clientConnectionId;
          uint32_t                channelNumber,
                                  remoteChannelNumber,
                                  initialWindowsSize,
@@ -335,6 +348,8 @@ namespace opensshenum{
          sigset_t                sigsetBackup,
                                  sigsetBlockAll;
          Fsm                     fsm;
+         std::regex              sshSrvRegexp;
+         std::string             regexptext;
    
          void                    getUserKeyFiles(void)                                   anyexcept; 
          void                    getUserPubK(void)                                       anyexcept; 
@@ -344,7 +359,7 @@ namespace opensshenum{
                                           std::initializer_list<VarData*>&& list)        anyexcept; 
          void                    createSendShellData()                                   anyexcept; 
    };
-
+   
 }
 
 #endif
