@@ -79,7 +79,7 @@ gabriel:OK
 
 See the man page included in this release.
 
-New Feafures:
+New Features:
 =============
 
 Ssh port scanner capability added: now opensshenum can scan all the ports associated to an address to find out instances of SSH listening on ports different from 22 to perform the exploit only to those verified ports.
