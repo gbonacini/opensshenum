@@ -65,7 +65,10 @@ int main(int argc, char **argv){
    }
 
    if(pcl.isSet('h')){
-       if(argc != 2) paramError(argv[0], "-h parameter must be present alone.");
+       if(argc != 2) 
+            paramError(argv[0], "-h parameter must be present alone.");
+       else 
+            paramError(argv[0], nullptr);
    }
    
    if(!pcl.isSet('p') && !pcl.isSet('s'))

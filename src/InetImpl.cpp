@@ -328,11 +328,19 @@ namespace inet {
             sigActionAlarm.sa_flags          = 0;
             sigActionAlarm.sa_handler        = [](int){ InetClient::alarmOn = true; };
             if(sigaction(SIGALRM, &sigActionAlarm, nullptr) != 0)
-                throw InetException("InetClient: setting alarm.");
+                throw InetException("InetClient: setting alarm hdlr.");
 
             alarm(maxTime);
             errCode = connect(socketFd,resElement->ai_addr, resElement->ai_addrlen);
             alarm(0);
+
+            sigemptyset(&sigActionAlarm.sa_mask);
+            sigActionAlarm.sa_flags          = 0;
+            sigActionAlarm.sa_flags          = sigActionAlarm.sa_flags | SA_RESETHAND;
+            sigActionAlarm.sa_handler        = nullptr;
+            if(sigaction(SIGALRM, &sigActionAlarm, nullptr) != 0)
+                throw InetException("InetClient: resetting alarm hdlr.");
+
             if(InetClient::alarmOn){
                 shutdown(socketFd, SHUT_RDWR);
                 throw InetConnectTimeout("InetClient: time exceed.");
