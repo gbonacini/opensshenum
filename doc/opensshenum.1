@@ -2,7 +2,7 @@
 .SH NAME                                                                     
 opensshenum \- an user enumerator and port scanner for servers using OpenSsh. 
 .SH SYNOPSIS                                                                 
-.B  opensshenum [-p port | -s -m min -M max -n -r regexp -c clientIdstr]
+.B  opensshenum [-p port | -s -m min -M max [ -n | -F fingerdb ] -r regexp -c clientIdstr]
          [-i identity] [-d] host
          [-h] [-V]
 .SH DESCRIPTION                                                              
@@ -21,6 +21,12 @@ Client id string used in initial handshaking to identify the ssh client. If no c
 regular expression to identify OpenSSH using is 'hello string' (i.e .*OpenSSH).
 .IP -n 
 Only scan the target to individuare ssh port(s). No user enumeration is performed.
+.IP -F fingerprintdbfile
+Try to guess if the users or combination of users verified are related to a specific os type or service.
+The db file, a csv file, has format:
+  user_1;os_or_service_1; ... ;os_or_service_n
+  ...
+  user_m;os_or_service_1; ... ;os_or_service_n
 .IP -m port_num
 Lower port for scan mode: the scan will be performed. Starting from this port number to that specified with -M.
 .IP -M port_num

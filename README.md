@@ -82,6 +82,9 @@ See the man page included in this release.
 New Features:
 =============
 
+Port Scanner:
+=============
+
 Ssh port scanner capability added: now opensshenum can scan all the ports associated to an address to find out instances of SSH listening on ports different from 22 to perform the exploit only to those verified ports.
 This feature can be used standalone, permitting to obtain only a list of the ports associated to SSh, without execute any attack.
 
@@ -89,7 +92,36 @@ Example:
 
   opensshenum -s -n -t2 -m22221 -M22225 -r'.*OpenSSH' -idummy_rsa my_imaginary_website.com
 
-  will scan ports (-s) between 22221 and 22225 (both included) , performing only the scan (-n), with timeout of 2 secs (-t), expecting a hello string containing the string OpenSSH, using a public key named idummy_rsa (I recommend to generate a key only for this kind of operations) and using as target my_imaginary_website.com.
-  More information in the man page.
+will scan ports (-s) between 22221 and 22225 (both included) , performing only the scan (-n), with timeout of 2 secs (-t), expecting a hello string containing the string OpenSSH, using a public key named idummy_rsa (I recommend to generate a key only for this kind of operations) and using as target my_imaginary_website.com.
+More information in the man page.
 
-  An alpha script using GNU Parallel ( parallenum.sh  ) is included, as poc of the reduction of the scanning time reachable splitting the range of the ports to scan in sub-ranges, each of those of pertinence of a specific process. This obviously produce a lot of noise. To reduce the noise the -t param can be used at the purpose.
+Parallel Execution:
+===================
+
+An alpha script using GNU Parallel ( parallenum.sh  ) is included, as poc of the reduction of the scanning time reachable splitting the range of the ports to scan in sub-ranges, each of those of pertinence of a specific process. This obviously produce a lot of noise. To reduce the noise the -t param can be used at the purpose.
+
+Fingerprinting:
+===============
+
+Fingerprint function, useful to identify automatically the OS type (i.e. if the "hello" string is omitted) and the services with a db of users/combitation of users. The db is create from *.lst files collected in a directory. Every *.lst file has name <os_name_or_service>.lst, examples:
+
+  ubuntu_17_10.lst
+  aix.lst
+  proprietary_ftp.lst
+
+The db, a csv file, has format:
+
+  user_1;os_or_service_1; ... ;os_or_service_n
+  ...
+  user_m;os_or_service_1; ... ;os_or_service_n
+
+The db could be created from the *.lst files using the createdb utility, present in the directory ./utils, specifying the *.lst directory, example:
+
+  cd utils
+  make
+  ./createdb ../lists/
+
+To require the fingerprinting, use the -F option with the db file, example:
+
+   cat test/scan.sample | opensshenum -p22 -idummy_rsa -Futils/opensshenum.db  localhost
+

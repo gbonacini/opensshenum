@@ -1331,6 +1331,25 @@ namespace opensshenum{
       return ret;
    }
 
+   Fingerprinting SshConnectionFprint::fp;
+
+   bool SshConnectionFprint::init(const std::string& fpdb) noexcept{
+         return fp.loadDatabase(fpdb);
+   }
+
+   bool  SshConnectionFprint::insertUser(const User& oc) noexcept{
+          return fp.insertOccurence(oc);
+   }
+
+   bool  SshConnectionFprint::getReport(void) noexcept{
+          return fp.getReport();
+   }
+
+   SshConnectionFprint::SshConnectionFprint(string& usr,      string& host,       string& port, 
+                                            string& identity, uint32_t chan)
+         : SshConnection(usr, host, port, identity, chan)
+   {}
+
    #if defined  __clang_major__ && !defined __APPLE__ && __clang_major__ >= 4
    #pragma clang diagnostic pop 
    #endif

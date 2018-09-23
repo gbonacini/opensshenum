@@ -102,7 +102,7 @@ PROGRAMS = $(bin_PROGRAMS)
 am_opensshenum_OBJECTS = Main.$(OBJEXT) InetImpl.$(OBJEXT) \
 	StringUtilsImpl.$(OBJEXT) OpenSshEnum.$(OBJEXT) \
 	CryptoImpl.$(OBJEXT) TypesImpl.$(OBJEXT) \
-	parseCmdLine.$(OBJEXT)
+	parseCmdLine.$(OBJEXT) Fingerprint.$(OBJEXT)
 opensshenum_OBJECTS = $(am_opensshenum_OBJECTS)
 opensshenum_LDADD = $(LDADD)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -324,8 +324,8 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 dist_man_MANS = ../doc/opensshenum.1
 dist_bin_SCRIPTS = parallenum.sh
-nobase_include_HEADERS = ../include/Crypto.hpp ../include/Inet.hpp ../include/Main.hpp ../include/StringUtils.hpp ../include/OpenSshEnum.hpp ../include/Types.hpp ../include/parseCmdLine.hpp
-opensshenum_SOURCES = Main.cpp InetImpl.cpp StringUtilsImpl.cpp OpenSshEnum.cpp CryptoImpl.cpp TypesImpl.cpp parseCmdLine.cpp
+nobase_include_HEADERS = ../include/Crypto.hpp ../include/Inet.hpp ../include/Main.hpp ../include/StringUtils.hpp ../include/OpenSshEnum.hpp ../include/Types.hpp ../include/parseCmdLine.hpp ../include/Fingerprint.hpp
+opensshenum_SOURCES = Main.cpp InetImpl.cpp StringUtilsImpl.cpp OpenSshEnum.cpp CryptoImpl.cpp TypesImpl.cpp parseCmdLine.cpp Fingerprint.cpp
 all: all-am
 
 .SUFFIXES:
@@ -456,6 +456,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CryptoImpl.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Fingerprint.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/InetImpl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/OpenSshEnum.Po@am__quote@
