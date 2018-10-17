@@ -59,7 +59,7 @@ case $host_os in
                     CXXFLAGS=" -std=c++11 -g -Wall -Wextra \
                              -D_FORTIFY_SOURCE=2 ${OPTIMIZATION} -fstack-protector \
                              --param=ssp-buffer-size=4 -Wformat -Werror=format-security ${INC_SSL_CUSTOM}"
-                    LDFLAGS="$LDFLAGS ${LIB_SSL_CUSTOM}-Wl,-z,relro"
+                    LDFLAGS="$LDFLAGS ${LIB_SSL_CUSTOM} -Wl,-z,relro"
               else
                     CXXFLAGS=" -std=c++11 -O2 -g -Wall "
 		    LDFLAGS="$LDFLAGS ${LIB_SSL_CUSTOM}"
